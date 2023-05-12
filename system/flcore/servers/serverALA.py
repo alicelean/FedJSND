@@ -170,6 +170,8 @@ class FedALA(object):
         for client in self.selected_clients:
             active_train_samples += client.train_samples
 
+
+
         self.uploaded_weights = []
         self.uploaded_ids = []
         self.uploaded_models = []
