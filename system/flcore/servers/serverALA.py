@@ -1,14 +1,32 @@
 import copy
 import numpy as np
 import torch
+import pandas as pd
 import time
 from flcore.clients.clientALA import *
 from utils.data_utils import read_client_data
+from methods.distance import jensen_shannon_distance
 from threading import Thread
 
 
 class FedALA(object):
-    def __init__(self, args, times):
+    def __init__(self, args, times,filedir):
+        #定义method
+        self.method=None
+        #m1,m2,None
+        self.filedir=filedir
+
+
+
+
+
+
+
+
+
+
+
+
         self.device = args.device
         self.dataset = args.dataset
         self.global_rounds = args.global_rounds
@@ -39,6 +57,7 @@ class FedALA(object):
         self.Budget = []
 
     def train(self):
+        colum_value = []
         for i in range(self.global_rounds+1):
             s_t = time.time()
             self.selected_clients = self.select_clients()
@@ -47,7 +66,9 @@ class FedALA(object):
             if i%self.eval_gap == 0:
                 print(f"\n-------------Round number: {i}-------------")
                 print("\nEvaluate global model")
-                self.evaluate()
+                #self.evaluate()
+                res = self.evaluate(i)
+                colum_value.append(res)
 
             threads = [Thread(target=client.train)
                        for client in self.selected_clients]
@@ -63,17 +84,68 @@ class FedALA(object):
         print("\nBest global accuracy.")
         print(max(self.rs_test_acc))
         print(sum(self.Budget[1:])/len(self.Budget[1:]))
+        # --------------acc
+        colum_name = ["method", "group", "Loss", "Accurancy", "AUC", "Std Test Accurancy", "Std Test AUC"]
+        redf = pd.DataFrame(columns=colum_name)
+        redf.loc[len(redf) + 1] = colum_name
+        for i in range(len(colum_value)):
+            redf.loc[len(redf) + 1] = colum_value[i]
+        path = "/Users/alice/Desktop/FedJSND/res/ala.csv"
+        redf.to_csv(path, mode='a', header=False)
 
 
     def set_clients(self, args, clientObj):
+        #整个数据集的标签向量
+        alllabelvectors = []
+        #用来存放id:labellist
+        labeldict={}
         for i in range(self.num_clients):
-            train_data = read_client_data(self.dataset, i, is_train=True)
-            test_data = read_client_data(self.dataset, i, is_train=False)
-            client = clientObj(args, 
-                            id=i, 
-                            train_samples=len(train_data), 
+            #---------
+            train_data,train_label = read_client_data(self.dataset, i,self.filedir, is_train=True)
+            test_data,test_label = read_client_data(self.dataset, i,self.filedir, is_train=False)
+            #单个client的标签向量
+            client_label=train_label
+            for j in range(len(test_label)):
+                client_label[j]=test_label[j]+train_label[j]
+
+            # labeldict[i]=client_label
+            #将所有的client 的label汇总------------------
+            if i==0:
+                alllabelvectors=client_label
+            else:
+                for j in range(len(client_label)):
+                    alllabelvectors[j] += client_label[j]
+            #print("INFormation---------set client ,num_client,client_label", self.num_clients, client_label, alllabelvectors)
+
+            client = clientObj(args,
+                            id=i,
+                            filedir=self.filedir,
+                            client_label=client_label,
+                            train_samples=len(train_data),
                             test_samples=len(test_data))
             self.clients.append(client)
+        #---------
+        for c in self.clients:
+            # ---------
+            c.distance=jensen_shannon_distance(c.client_label, alllabelvectors)
+            print(f"INFormation-----------------------------------init client {c.id} JS distance is {c.distance}-------------------------------")
+
+
+
+
+    # def set_clients(self, args, clientObj):
+    #
+    #     for i in range(self.num_clients):
+    #         # ---------
+    #         train_data, train_label = read_client_data(self.dataset, i, is_train=True)
+    #         test_data, test_label = read_client_data(self.dataset, i, is_train=False)
+    #         print(f"Information--------------------client {i} data length is :",len(train_data),len(test_data))
+    #         client = clientObj(args,
+    #                            id=i,
+    #                            client_label=None,
+    #                            train_samples=len(train_data),
+    #                            test_samples=len(test_data))
+    #         self.clients.append(client)
 
     def select_clients(self):
         if self.random_join_ratio:
@@ -88,6 +160,7 @@ class FedALA(object):
         assert (len(self.clients) > 0)
 
         for client in self.clients:
+            print(f"Information--------------------client {client.id} data length is :{client.train_samples}")
             client.local_initialization(self.global_model)
 
     def receive_models(self):
@@ -147,7 +220,7 @@ class FedALA(object):
 
         return ids, num_samples, losses
 
-    def evaluate(self, acc=None, loss=None):
+    def evaluate(self,group, acc=None, loss=None):
         stats = self.test_metrics()
         stats_train = self.train_metrics()
 
@@ -172,3 +245,4 @@ class FedALA(object):
         print("Averaged Test AUC: {:.4f}".format(test_auc))
         print("Std Test Accurancy: {:.4f}".format(np.std(accs)))
         print("Std Test AUC: {:.4f}".format(np.std(aucs)))
+        return [self.method,group,train_loss,test_acc,test_auc,np.std(accs),np.std(aucs)]

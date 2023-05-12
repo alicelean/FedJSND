@@ -68,8 +68,12 @@ class ALA:
         """
 
         # randomly sample partial local training data
+
         rand_ratio = self.rand_percent / 100
         rand_num = int(rand_ratio*len(self.train_data))
+        if rand_num < self.batch_size:
+            print(f"ERROR:example rand_num={rand_num},<self.batch_size={self.batch_size},because len(self.train_data)={len(self.train_data)},rand_ratio={rand_ratio}")
+        return
         rand_idx = random.randint(0, len(self.train_data)-rand_num)
         rand_loader = DataLoader(self.train_data[rand_idx:rand_idx+rand_num], self.batch_size, drop_last=True)
 
@@ -116,7 +120,10 @@ class ALA:
         # weight learning
         losses = []  # record losses
         cnt = 0  # weight training iteration counter
+        print("start weight learning")
+        print(rand_idx, rand_num, len(self.train_data))
         while True:
+            print(f"rand_loader length:{len(rand_loader)}")
             for x, y in rand_loader:
                 if type(x) == type([]):
                     x[0] = x[0].to(self.device)

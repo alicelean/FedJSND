@@ -11,11 +11,18 @@ from utils.ALA import ALA
 
 
 class clientALA(object):
-    def __init__(self, args, id, train_samples, test_samples):
+    def __init__(self, args, id,filedir,client_label, train_samples, test_samples):
+
+
         self.model = copy.deepcopy(args.model)
         self.dataset = args.dataset
         self.device = args.device
         self.id = id
+        #--------新增的属性
+        self.client_label = client_label
+        self.distance=None
+        self.filedir=filedir
+
 
         self.num_classes = args.num_classes
         self.train_samples = train_samples
@@ -31,7 +38,7 @@ class clientALA(object):
         self.rand_percent = args.rand_percent
         self.layer_idx = args.layer_idx
 
-        train_data = read_client_data(self.dataset, self.id, is_train=True)
+        train_data,_= read_client_data(self.dataset, self.id,self.filedir, is_train=True)
         self.ALA = ALA(self.id, self.loss, train_data, self.batch_size, 
                     self.rand_percent, self.layer_idx, self.eta, self.device)
 
@@ -59,13 +66,13 @@ class clientALA(object):
     def load_train_data(self, batch_size=None):
         if batch_size == None:
             batch_size = self.batch_size
-        train_data = read_client_data(self.dataset, self.id, is_train=True)
+        train_data,_ = read_client_data(self.dataset, self.id,self.filedir, is_train=True)
         return DataLoader(train_data, batch_size, drop_last=True, shuffle=False)
 
     def load_test_data(self, batch_size=None):
         if batch_size == None:
             batch_size = self.batch_size
-        test_data = read_client_data(self.dataset, self.id, is_train=False)
+        test_data,_ = read_client_data(self.dataset, self.id,self.filedir, is_train=False)
         return DataLoader(test_data, batch_size, drop_last=True, shuffle=False)
 
     def test_metrics(self, model=None):

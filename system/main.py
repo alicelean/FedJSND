@@ -5,6 +5,10 @@ import time
 import warnings
 import numpy as np
 import torchvision
+import sys
+sys.path.append('/Users/alice/Desktop/FedJSND/')
+print(sys.path)
+
 
 from flcore.servers.serverALA import FedALA
 from flcore.trainmodel.models import *
@@ -47,9 +51,11 @@ def run(args):
             raise NotImplementedError
                             
         print(args.model)
-
+        filedir="origin"
+        # filedir="m1"
+        # filedir="m2"
         if args.algorithm == "FedALA":
-            server = FedALA(args, i)
+            server = FedALA(args, i,filedir)
         else:
             raise NotImplementedError
             
@@ -78,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument('-lbs', "--batch_size", type=int, default=10)
     parser.add_argument('-lr', "--local_learning_rate", type=float, default=0.005,
                         help="Local learning rate")
-    parser.add_argument('-gr', "--global_rounds", type=int, default=1000)
+    parser.add_argument('-gr', "--global_rounds", type=int, default=1)
     parser.add_argument('-ls', "--local_steps", type=int, default=1)
     parser.add_argument('-algo', "--algorithm", type=str, default="FedGP")
     parser.add_argument('-jr', "--join_ratio", type=float, default=1.0,

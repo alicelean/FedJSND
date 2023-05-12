@@ -1,3 +1,4 @@
+['/Users/alice/Desktop/FedJSND/system', '/Users/alice/opt/anaconda3/envs/tensorflow/lib/python36.zip', '/Users/alice/opt/anaconda3/envs/tensorflow/lib/python3.6', '/Users/alice/opt/anaconda3/envs/tensorflow/lib/python3.6/lib-dynload', '/Users/alice/opt/anaconda3/envs/tensorflow/lib/python3.6/site-packages', '/Users/alice/Desktop/FedJSND/']
 
 cuda is not avaiable.
 
@@ -21,17 +22,70 @@ FedAvgCNN(
   )
   (fc): Linear(in_features=512, out_features=10, bias=True)
 )
+
+Join ratio / total clients: 1.0 / 20
+Finished creating server and clients.
+
+-------------Round number: 0-------------
+
+Evaluate global model
+Client 0: Acc: 0.15846153846153846, AUC: 0.5892953320184089
+Client 1: Acc: 0.10833333333333334, AUC: 0.6530092592592592
+Client 2: Acc: 0.2, AUC: 0.74136875
+Client 3: Acc: 0.0015873015873015873, AUC: 0.3056060860558215
+Client 4: Acc: 0.04375, AUC: 0.5095331790123456
+Client 5: Acc: 0.0006493506493506494, AUC: 0.15531071381720732
+Client 6: Acc: 0.016129032258064516, AUC: 0.38075789108567465
+Client 7: Acc: 0.16774193548387098, AUC: 0.7598231009365245
+Client 8: Acc: 0.0011111111111111111, AUC: 0.3632620027434842
+Client 9: Acc: 0.036, AUC: 0.42760872222222224
+Client 10: Acc: 0.0012987012987012987, AUC: 0.29874852420306963
+Client 11: Acc: 0.007446808510638298, AUC: 0.24228635380514058
+Client 12: Acc: 0.008888888888888889, AUC: 0.46413813443072705
+Client 13: Acc: 0.013207547169811321, AUC: 0.45321387603338475
+Client 14: Acc: 0.044755244755244755, AUC: 0.509084497476106
+Client 15: Acc: 0.17279411764705882, AUC: 0.5607801686851211
+Client 16: Acc: 0.0, AUC: 0.04030411522633744
+Client 17: Acc: 0.13687943262411348, AUC: 0.5643337580828149
+Client 18: Acc: 0.14732824427480917, AUC: 0.6762794190962713
+Client 19: Acc: 0.0013157894736842105, AUC: 0.4250501596645122
+Client 0: Train loss: 2.2913789882272635
+Client 1: Train loss: 2.286664421493943
+Client 2: Train loss: 2.272621741060351
+Client 3: Train loss: 2.3276189917012267
+Client 4: Train loss: 2.305898301251285
+Client 5: Train loss: 2.3467189397277504
+Client 6: Train loss: 2.31553282889914
+Client 7: Train loss: 2.26950505407233
+Client 8: Train loss: 2.3169195625517105
+Client 9: Train loss: 2.3142510294914245
+Client 10: Train loss: 2.3321260106410078
+Client 11: Train loss: 2.3373633766850683
+Client 12: Train loss: 2.3062832329008316
+Client 13: Train loss: 2.310138900578022
+Client 14: Train loss: 2.3019009092193103
+Client 15: Train loss: 2.2958891713151743
+Client 16: Train loss: 2.371366453521392
+Client 17: Train loss: 2.2946772530287434
+Client 18: Train loss: 2.284115274545505
+Client 19: Train loss: 2.3115639556158554
+Averaged Train Loss: 2.3127
+Averaged Test Accurancy: 0.0588
+Averaged Test AUC: 0.4315
+Std Test Accurancy: 0.0710
+Std Test AUC: 0.1843
+-------------------------------------------------- 34.12565779685974
 Traceback (most recent call last):
-  File "/Users/alice/Desktop/FedJSND/system/main.py", line 110, in <module>
+  File "/Users/alice/Desktop/FedJSND/system/main.py", line 114, in <module>
     run(args)
-  File "/Users/alice/Desktop/FedJSND/system/main.py", line 52, in run
-    server = FedALA(args, i)
-  File "/Users/alice/Desktop/FedJSND/system/flcore/servers/serverALA.py", line 34, in __init__
-    self.set_clients(args, clientALA)
-  File "/Users/alice/Desktop/FedJSND/system/flcore/servers/serverALA.py", line 70, in set_clients
-    train_data = read_client_data(self.dataset, i, is_train=True)
-  File "/Users/alice/Desktop/FedJSND/system/utils/data_utils.py", line 87, in read_client_data
-    train_data = read_data(dataset, idx, is_train)
-  File "/Users/alice/Desktop/FedJSND/system/utils/data_utils.py", line 67, in read_data
-    with open(train_file, 'rb') as f:
-FileNotFoundError: [Errno 2] No such file or directory: '../dataset/mnist-0.1-npz/train/train0_.npz'
+  File "/Users/alice/Desktop/FedJSND/system/main.py", line 60, in run
+    server.train()
+  File "/Users/alice/Desktop/FedJSND/system/flcore/servers/serverALA.py", line 60, in train
+    self.send_models()
+  File "/Users/alice/Desktop/FedJSND/system/flcore/servers/serverALA.py", line 145, in send_models
+    client.local_initialization(self.global_model)
+  File "/Users/alice/Desktop/FedJSND/system/flcore/clients/clientALA.py", line 64, in local_initialization
+    self.ALA.adaptive_local_aggregation(received_global_model, self.model)
+  File "/Users/alice/Desktop/FedJSND/system/utils/ALA.py", line 144, in adaptive_local_aggregation
+    losses.append(loss_value.item())
+AttributeError: 'NoneType' object has no attribute 'item'
