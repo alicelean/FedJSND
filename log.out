@@ -1,0 +1,37 @@
+
+cuda is not avaiable.
+
+
+============= Running time: 0th =============
+Creating server and clients ...
+FedAvgCNN(
+  (conv1): Sequential(
+    (0): Conv2d(1, 32, kernel_size=(5, 5), stride=(1, 1))
+    (1): ReLU(inplace=True)
+    (2): MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=0, dilation=1, ceil_mode=False)
+  )
+  (conv2): Sequential(
+    (0): Conv2d(32, 64, kernel_size=(5, 5), stride=(1, 1))
+    (1): ReLU(inplace=True)
+    (2): MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=0, dilation=1, ceil_mode=False)
+  )
+  (fc1): Sequential(
+    (0): Linear(in_features=1024, out_features=512, bias=True)
+    (1): ReLU(inplace=True)
+  )
+  (fc): Linear(in_features=512, out_features=10, bias=True)
+)
+Traceback (most recent call last):
+  File "/Users/alice/Desktop/FedJSND/system/main.py", line 110, in <module>
+    run(args)
+  File "/Users/alice/Desktop/FedJSND/system/main.py", line 52, in run
+    server = FedALA(args, i)
+  File "/Users/alice/Desktop/FedJSND/system/flcore/servers/serverALA.py", line 34, in __init__
+    self.set_clients(args, clientALA)
+  File "/Users/alice/Desktop/FedJSND/system/flcore/servers/serverALA.py", line 70, in set_clients
+    train_data = read_client_data(self.dataset, i, is_train=True)
+  File "/Users/alice/Desktop/FedJSND/system/utils/data_utils.py", line 87, in read_client_data
+    train_data = read_data(dataset, idx, is_train)
+  File "/Users/alice/Desktop/FedJSND/system/utils/data_utils.py", line 67, in read_data
+    with open(train_file, 'rb') as f:
+FileNotFoundError: [Errno 2] No such file or directory: '../dataset/mnist-0.1-npz/train/train0_.npz'
