@@ -15,8 +15,8 @@ class FedALA(object):
         self.method=None
         #m1,m2,None
         self.filedir=filedir
-
-
+        self.method = "FedALA"
+        # self.method = "ALAJS"
 
 
 
@@ -58,9 +58,34 @@ class FedALA(object):
 
     def train(self):
         colum_value = []
+
+
+        # -----------写入超参数
+        redf = pd.DataFrame(columns=["ratio", "client_num", "a"])
+        redf.loc[len(redf) + 1] = ["ratio", "client_num", "a"]
+        redf.loc[len(redf) + 1] = [self.join_ratio, self.num_clients, 0.5]
+        path = "/Users/alice/Desktop/FedJSND/res/ala.csv"
+        redf.to_csv(path, mode='a', header=False)
+
+        # method = "ALAJS"
+        # method = "ALADA"
+        # method = "ALAJSDA"
+        # ---------------------------------------
+
+
+
         for i in range(self.global_rounds+1):
             s_t = time.time()
             self.selected_clients = self.select_clients()
+            #----------------------写入每次选择的client的数据
+            clientvalue=[["rounds","id","label","train_samples","test_samples","distance","local_steps","learning_rate","last_loss"]]
+            for client in self.selected_clients:
+                clientvalue.append([i,client.id,client.client_label,client.train_samples,client.test_samples,client.distance,client.local_steps,client.learning_rate,client.last_loss])
+            redf = pd.DataFrame(columns=clientvalue[0])
+            for i in range(len(clientvalue)):
+                redf.loc[len(redf) + 1] = clientvalue[i]
+            path = "/Users/alice/Desktop/FedJSND/res/"+self.filedir+"/"+self.method+"/client/"+"select_client_info"+str(self.num_clients)+"_"+str(self.join_ratio)+".csv"
+            redf.to_csv(path, mode='a', header=False)
             self.send_models()
 
             if i%self.eval_gap == 0:
@@ -68,7 +93,10 @@ class FedALA(object):
                 print("\nEvaluate global model")
                 #self.evaluate()
                 res = self.evaluate(i)
-                colum_value.append(res)
+                resc=[self.filedir]
+                for i in res:
+                    resc.append(i)
+                colum_value.append(resc)
 
             threads = [Thread(target=client.train)
                        for client in self.selected_clients]
@@ -85,7 +113,7 @@ class FedALA(object):
         print(max(self.rs_test_acc))
         print(sum(self.Budget[1:])/len(self.Budget[1:]))
         # --------------acc
-        colum_name = ["method", "group", "Loss", "Accurancy", "AUC", "Std Test Accurancy", "Std Test AUC"]
+        colum_name = ["case","method", "group", "Loss", "Accurancy", "AUC", "Std Test Accurancy", "Std Test AUC"]
         redf = pd.DataFrame(columns=colum_name)
         redf.loc[len(redf) + 1] = colum_name
         for i in range(len(colum_value)):
@@ -98,7 +126,15 @@ class FedALA(object):
         #整个数据集的标签向量
         alllabelvectors = []
         #用来存放id:labellist
-        labeldict={}
+        #labeldict={}
+        labelname= ['client_id','client_label']
+        labelvalue = []
+        allsize=0
+        # 记录每个client 的数据样本
+        traindatalength = ['traindatalength']
+        testdatalength = ['testdatalength']
+        dataname = ['datatype']
+
         for i in range(self.num_clients):
             #---------
             train_data,train_label = read_client_data(self.dataset, i,self.filedir, is_train=True)
@@ -116,7 +152,7 @@ class FedALA(object):
                 for j in range(len(client_label)):
                     alllabelvectors[j] += client_label[j]
             #print("INFormation---------set client ,num_client,client_label", self.num_clients, client_label, alllabelvectors)
-
+            allsize+=len(train_data)
             client = clientObj(args,
                             id=i,
                             filedir=self.filedir,
@@ -124,11 +160,43 @@ class FedALA(object):
                             train_samples=len(train_data),
                             test_samples=len(test_data))
             self.clients.append(client)
+            #记录写入文件的数据
+            labelvalue.append([client.id,client_label])
+
+            #labeldict[client.id]=client_label
+            traindatalength.append(len(train_data))
+            testdatalength.append(len(test_data))
+            dataname.append('client_' + str(i))
         #---------
+        alldistance=0
         for c in self.clients:
             # ---------
+            c.allsize=allsize
             c.distance=jensen_shannon_distance(c.client_label, alllabelvectors)
+            alldistance+=c.distance
+
             print(f"INFormation-----------------------------------init client {c.id} JS distance is {c.distance}-------------------------------")
+        for c in self.clients:
+            c.alldistance=alldistance
+        # 读完数据后写入--------------------
+        redf = pd.DataFrame(columns=dataname)
+        redf.loc[len(redf) + 1] = dataname
+        redf.loc[len(redf) + 1] = traindatalength
+        redf.loc[len(redf) + 1] = testdatalength
+        path = "/Users/alice/Desktop/FedJSND/res/ala.csv"
+        redf.to_csv(path, mode='a', header=False)
+        #---------------------------------------
+        #所有client的数据信息
+        redf = pd.DataFrame(columns=labelname)
+        redf.loc[len(redf) + 1] = labelname
+        for value in labelvalue:
+            redf.loc[len(redf) + 1] = value
+        print("INFormation--labelpath -",self.num_clients,self.join_ratio,self.filedir,self.method)
+        #labelpath = "/Users/alice/Desktop/FedJSND/res/"+self.filedir+"_"+str(self.num_clients)+"_"+self.method+"_"+str(self.join_ratio)+".csv"
+        labelpath = "/Users/alice/Desktop/FedJSND/res/" + self.filedir + "/" + self.method + "/client/" + "allclient_info" + str(
+            self.num_clients) + "_" + str(self.join_ratio) + ".csv"
+
+        redf.to_csv(labelpath, mode='a', header=False)
 
 
 
@@ -165,7 +233,6 @@ class FedALA(object):
 
     def receive_models(self):
         assert (len(self.selected_clients) > 0)
-
         active_train_samples = 0
         for client in self.selected_clients:
             active_train_samples += client.train_samples
@@ -175,10 +242,27 @@ class FedALA(object):
         self.uploaded_weights = []
         self.uploaded_ids = []
         self.uploaded_models = []
+        print(f"Information -------------aggregation method is {self.method}-------------")
         for client in self.selected_clients:
-            self.uploaded_weights.append(client.train_samples / active_train_samples)
+            if self.method=="FedALA":
+                #print(f"Information -------------aggregation method{self.method}-------------")
+                weight=client.train_samples / active_train_samples
+            elif self.method=="ALAJS":
+                a=0.5
+                #print(f"Information -------------aggregation method is {self.method}-------------")
+                weight=a*(client.train_samples / active_train_samples)/(1-a)*(client.distance/client.alldistance)
+                weight =1-client.distance / client.alldistance
+            elif self.method=="ALADA":
+                print(f"Information -------------aggregation method{self.method}-------------")
+
+            # elif self.method=="FedALA":
+            #     print(f"Information -------------aggregation method{self.method}-------------")
+            #
+            self.uploaded_weights.append(weight)
             self.uploaded_ids.append(client.id)
             self.uploaded_models.append(client.model)
+        print(f"Information -------------aggregation weight is{self.uploaded_weights}-------------")
+        print(f"Information -------------selected client id is{self.uploaded_ids}-------------")
 
     def add_parameters(self, w, client_model):
         for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):

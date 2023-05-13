@@ -4,18 +4,22 @@ import numpy as np
 import torch
 
 class DataSet(object):
-    def __init__(self, name,num_clients,filedir):
+    def __init__(self, name,num_clients,writedir):
         #数据集名称
         self.dataset=name
         #要分成的客户端个数
         self.num_clients=num_clients
         #数据集文件，“m1","m2",.....
-        self.filedir=filedir
+        self.filedir="origin"
+        #写入数据地址。保证每个client的数据不小于一个batch_size
+        self.writedir=writedir
 
     def writetxt(self):
         #读取原始数据
-        train_shuffledata = read_data_new(self.dataset, self.num_clients, is_train=True)
-        test_shuffledata = read_data_new(self.dataset, self.num_clients, is_train=False)
+        print("Information---------------------reading data-----------------------------------------")
+        train_shuffledata = read_data_new(self.dataset, self.num_clients,self.filedir, is_train=True)
+        test_shuffledata = read_data_new(self.dataset, self.num_clients,self.filedir, is_train=False)
+        #写入数据
         for idx in range(self.num_clients):
             train_data = train_shuffledata[idx]
             print(f"-----------------------write train txt,train_data type is,client {idx}", type(train_data), "length is :", len(train_data))
@@ -23,7 +27,7 @@ class DataSet(object):
             data_arrays = {}
             for key, value in writedata.items():
                 data_arrays[key] = np.array(value)
-            trainfile = "/Users/alice/Desktop/FedJSND/dataset/"+self.filedir+"/train/train" + str(idx) + "_.npz"
+            trainfile = "/Users/alice/Desktop/FedJSND/dataset/"+self.writedir+"/train/train" + str(idx) + "_.npz"
             with open(trainfile, 'wb') as f:
                 np.savez(f, data=data_arrays)
             print("------------------------write test", trainfile, " txt success")
@@ -34,12 +38,12 @@ class DataSet(object):
             data_arrays = {}
             for key, value in writedata.items():
                 data_arrays[key] = np.array(value)
-            testfile = "/Users/alice/Desktop/FedJSND/dataset/"+self.filedir+"/test/test" + str(idx) + "_.npz"
+            testfile = "/Users/alice/Desktop/FedJSND/dataset/"+self.writedir+"/test/test" + str(idx) + "_.npz"
             with open(testfile, 'wb') as f:
                 np.savez(f, data=data_arrays)
             print("------------------------write test", testfile, " txt success")
 
-    def get_data(dataset, num_clients, is_train):
+    def get_data(dataset, num_clients,filedir, is_train):
         '''
         重新分配节点的数据(self.dataset, self.num_clients, is_train=True)
         '''
@@ -49,7 +53,7 @@ class DataSet(object):
             # data={'x':numpy.ndarray,,'y':numpy.ndarray}
             # data['x'].shape is(1972, 1, 28, 28),client_data_num=1972
             # data['y'].shape is (1972, )
-            data = read_data(dataset, i, is_train)
+            data = read_data(dataset, i,filedir, is_train)
             # print("read_data origin data", data['x'].shape,data['y'].shape)
             # 变换成张量形式
             X = torch.Tensor(data['x']).type(torch.float32)
@@ -116,7 +120,7 @@ class DataSet(object):
         return shuffledata
 
 
-data=DataSet("mnist-0.1-npz",30,"m2")
+data=DataSet("mnist-0.1-npz",1000,"m1000")
 data.writetxt()
 
 

@@ -15,19 +15,19 @@ def getlabelvector(label):
 
 import random
 
-def generate_Randomnums(k, total_sum):
+def generate_Randomnums(k, total_sum,batch_size=10):
     '''
     生成k个随机正整数，且这些数的和=total_sum
+    同时保证每个client不小于k个数，至少有一个batch_size 的数据
     '''
     #print(" ------------------------------------------------------------------------------------------data  generate_Randomnums -----------------------------")
-
     numlist = []
     length=k
     origin_sum=total_sum
     while total_sum > 0 and length>1:
         imax= int(total_sum / length)
         #10 是batch_size
-        numlist.append(random.randint(10, imax))
+        numlist.append(random.randint(batch_size, imax))
         total_sum -= numlist[k-length]
         length-=1
     #print(k,len(result))
@@ -119,7 +119,7 @@ def change_data (datalist):
     print("change data type",x_array1.shape,y_array.shape)
     return {'x': x_array1, 'y': y_array}
 
-def read_data_new(dataset,num_clients,is_train):
+def read_data_new(dataset,num_clients,filedir,is_train):
     '''
     重新分配节点的数据(self.dataset, self.num_clients, is_train=True)
     '''
@@ -131,7 +131,7 @@ def read_data_new(dataset,num_clients,is_train):
         # data={'x':numpy.ndarray,,'y':numpy.ndarray}
         # data['x'].shape is(1972, 1, 28, 28),client_data_num=1972
         # data['y'].shape is (1972, )
-        data=read_data(dataset, i, is_train)
+        data=read_data(dataset, i,filedir, is_train)
         #print("read_data origin data", data['x'].shape,data['y'].shape)
         #变换成张量形式
         X= torch.Tensor(data['x']).type(torch.float32)

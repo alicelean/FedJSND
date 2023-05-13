@@ -22,6 +22,9 @@ class clientALA(object):
         self.client_label = client_label
         self.distance=None
         self.filedir=filedir
+        self.alldistance=None
+        self.allsize=None
+        self.last_loss=-1
 
 
         self.num_classes = args.num_classes
